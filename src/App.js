@@ -4,64 +4,47 @@ import { Component } from 'react';
 
 class App extends Component{
   state={
-    counter: 0, 
     posts: [
-      {
-        id: 1,
-        title: 'O titulo 1',
-        body: 'O corpo 1'
-      },
-      {
-        id: 2,
-        title: 'O titulo 2',
-        body: 'O corpo 2'
-      },
-      {
-        id: 3,
-        title: 'O titulo 3',
-        body: 'O corpo 3'
-      },
     ]
   }
 
-  timeoutUpdate = null
 
   componentDidMount() {
-    this.handleTimeout()
+    this.loadPosts()
   }
 
-  componentDidUpdate() {
-    // clearTimeout(this.timeoutUpdate)
-    this.handleTimeout()
-  }
+  loadPosts = async () => {
+    const postResponse = fetch('https://jsonplaceholder.typicode.com/posts')
+    const photosResponse = fetch('https://jsonplaceholder.typicode.com/photos')
 
-  componentWillUnmount() {
-    clearTimeout(this.timeoutUpdate)
-  }
+    const [posts, photos] = await Promise.all([postResponse, photosResponse])
+    const postsJson = await posts.json()
+    const photosJson = await photos.json()
 
-  handleTimeout = () => {
-    const { posts, counter } = this.state
-    posts[0].title = 'O titulo mudou'
+    const postsAndPhotos = postsJson.map((post, index) => {
+      return { ...post, cover: photosJson[index].url }
+    })
 
-    this.timeoutUpdate = setTimeout(() => {
-      this.setState({posts, counter: counter + 1 })
-    }, 2000)
+    this.setState( { posts: postsAndPhotos } )
   }
 
   render(){
-    const { posts, counter } = this.state
-    console.log(posts)
+    const { posts } = this.state
 
     return(
-      <div className='App'>
-          <h1>{counter}</h1>
-          {posts.map(post => (
-            <div>
-              <h1 key={post.id}>{post.title}</h1>
-              <p>{post.body}</p>
-            </div>
-          ))}
-      </div>
+      <section className='container'>
+        <div className='posts'>
+            {posts.map(post => (
+              <div className='post'>
+                <img src={post.cover} alt={post.title} />
+                <div key={post.id} className='post-content'>
+                  <h1>{post.title}</h1>
+                  <p>{post.body}</p>
+                </div>
+              </div>
+            ))}
+        </div>
+      </section>
     )
   }
 }
